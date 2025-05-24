@@ -10,17 +10,12 @@ from bs4 import BeautifulSoup
 TIMEOUT = 10  # seconds for requests
 STATE_FILE = "leaderboard_state.json"
 
-# Group patterns by model type
-model_patterns = {
-    "Claude 4 Sonnet": [
-        re.compile(r"claude[- ]?4[- ]?sonnet", re.IGNORECASE),
-        re.compile(r"claude[- ]?sonnet[- ]?4", re.IGNORECASE),
-    ],
-    "Claude 4 Opus": [
-        re.compile(r"claude[- ]?4[- ]?opus", re.IGNORECASE),
-        re.compile(r"claude[- ]?opus[- ]?4", re.IGNORECASE),
-    ],
-}
+# --- Pattern builder helper ---
+def build_pattern(model_name: str) -> re.Pattern:
+    parts = re.split(r"[ -]+", model_name.strip())
+    escaped = [re.escape(p) for p in parts]
+    regex = r"[- ]?".join(escaped)          # optional dash/space between each word
+    return re.compile(regex, re.IGNORECASE)
 
 
 def load_leaderboard_urls(html_path):
@@ -35,7 +30,7 @@ def load_leaderboard_urls(html_path):
     return [a["href"] for a in dl.find_all("a", href=True)]
 
 
-def check_url_for_models(url):
+def check_url_for_models(url: str, patterns: dict[str, re.Pattern]):
     """Fetch a URL and return which model types were found."""
     try:
         r = requests.get(url, timeout=TIMEOUT)
@@ -44,11 +39,9 @@ def check_url_for_models(url):
         return {"error": str(e)}
 
     found_models = []
-    for model_name, patterns in model_patterns.items():
-        # Check if any pattern for this model matches
-        if any(pattern.search(text) for pattern in patterns):
+    for model_name, pattern in patterns.items():
+        if pattern.search(text):
             found_models.append(model_name)
-
     return {"found": found_models}
 
 
@@ -161,31 +154,51 @@ def main():
         description="Check leaderboard URLs for model mentions."
     )
     parser.add_argument("bookmarks_file", help="Path to the HTML bookmarks file")
+    parser.add_argument(
+        "-m", "--model",
+        action="append",
+        required=True,
+        help="Model name to search for (can be repeated)"
+    )
     args = parser.parse_args()
 
     # Load previous state
     old_state = load_state(STATE_FILE)
+    old_results = old_state.get("results", {}) if old_state else {}
 
-    # Get current results
+    # Build model patterns from CLI
+    cli_models = args.model                          # list[str]
+    model_patterns = {m: build_pattern(m) for m in cli_models}
+
+    # Get current scan
     urls = load_leaderboard_urls(args.bookmarks_file)
-    current_results = {}
+    current_scan = {}
 
     for url in urls:
-        res = check_url_for_models(url)
+        res = check_url_for_models(url, model_patterns)
         if "error" in res:
             print(f"[ERROR] {url} → {res['error']}")
-            current_results[url] = []  # Store empty list for failed URLs
+            current_scan[url] = []  # Store empty list for failed URLs
         else:
             found = res["found"]
-            current_results[url] = found
+            current_scan[url] = found
             print(f"{url}\n    → found: {', '.join(found) or 'none'}\n")
 
+    # Merge new scan into accumulated results, removing only rescanned models
+    merged_results = old_results.copy()
+    rescanned = set(cli_models)
+
+    for url, found_now in current_scan.items():
+        prev = set(merged_results.get(url, []))
+        prev -= rescanned                 # drop any models we just rescanned
+        merged_results[url] = sorted(prev | set(found_now))
+
     # Compare with previous state and show changes
-    changes = compare_states(old_state, current_results)
+    changes = compare_states(old_state, merged_results)
     print_changes(changes)
 
     # Save current state
-    save_state(STATE_FILE, current_results)
+    save_state(STATE_FILE, merged_results)
 
 
 if __name__ == "__main__":
