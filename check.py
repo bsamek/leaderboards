@@ -11,6 +11,7 @@ TIMEOUT = 10  # seconds for requests
 STATE_FILE = "leaderboard_state.json"
 
 # Group patterns by model type
+
 model_patterns = {
     "Claude 4 Sonnet": [
         re.compile(r"claude[- ]?4[- ]?sonnet", re.IGNORECASE),
