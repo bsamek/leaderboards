@@ -3,7 +3,7 @@ import re
 import argparse
 import json
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from bs4 import BeautifulSoup
 
 # --- CONFIGURATION ---
@@ -64,7 +64,7 @@ def load_state(filename):
 def save_state(filename, results):
     """Save current state to JSON file."""
     state = {
-        'last_check': datetime.utcnow().isoformat() + 'Z',
+        'last_check': datetime.now(UTC).isoformat(),
         'results': results
     }
     
