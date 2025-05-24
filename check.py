@@ -9,6 +9,7 @@ TIMEOUT = 10  # seconds for requests
 # Build regex patterns
 patterns = {
     'claude_4': re.compile(r'claude[- ]?4', re.IGNORECASE),
+    'claude_sonnet_4': re.compile(r'claude[- ]?sonnet[- ]?4', re.IGNORECASE),
     'opus':     re.compile(r'\bopus\b', re.IGNORECASE),
 }
 
