@@ -8,9 +8,10 @@ TIMEOUT = 10  # seconds for requests
 
 # Build regex patterns
 patterns = {
-    'claude_4': re.compile(r'claude[- ]?4', re.IGNORECASE),
+    'claude_4_sonnet': re.compile(r'claude[- ]?4[- ]?sonnet', re.IGNORECASE),
+    'claude_4_opus': re.compile(r'claude[- ]?4[- ]?opus', re.IGNORECASE),
     'claude_sonnet_4': re.compile(r'claude[- ]?sonnet[- ]?4', re.IGNORECASE),
-    'opus':     re.compile(r'\bopus\b', re.IGNORECASE),
+    'claude_opus_4': re.compile(r'claude[- ]?opus[- ]?4', re.IGNORECASE),
 }
 
 def load_leaderboard_urls(html_path):
