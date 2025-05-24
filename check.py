@@ -1,9 +1,9 @@
 import requests
 import re
+import argparse
 from bs4 import BeautifulSoup
 
 # --- CONFIGURATION ---
-BOOKMARKS_FILE = 'bookmarks_5_24_25.html'
 TIMEOUT = 10  # seconds for requests
 
 # Build regex patterns
@@ -36,7 +36,11 @@ def check_url_for_models(url):
     return results
 
 def main():
-    urls = load_leaderboard_urls(BOOKMARKS_FILE)
+    parser = argparse.ArgumentParser(description='Check leaderboard URLs for model mentions.')
+    parser.add_argument('bookmarks_file', help='Path to the HTML bookmarks file')
+    args = parser.parse_args()
+    
+    urls = load_leaderboard_urls(args.bookmarks_file)
     for url in urls:
         res = check_url_for_models(url)
         if 'error' in res:
