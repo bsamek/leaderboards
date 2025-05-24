@@ -1,0 +1,46 @@
+{
+  "last_check": "2025-05-24T20:20:58.591790+00:00",
+  "results": {
+    "https://beta.lmarena.ai/leaderboard/text": [],
+    "https://livebench.ai/": [],
+    "https://aider.chat/docs/leaderboards/": [],
+    "https://artificialanalysis.ai/leaderboards/models": [
+      "Claude 4 Sonnet",
+      "Claude 4 Opus"
+    ],
+    "https://web.lmarena.ai/leaderboard": [],
+    "https://eqbench.com/": [],
+    "https://www.vellum.ai/llm-leaderboard": [
+      "Claude 4 Sonnet",
+      "Claude 4 Opus"
+    ],
+    "https://bigcode-bench.github.io/": [],
+    "https://scale.com/leaderboard": [
+      "Claude 4 Sonnet",
+      "Claude 4 Opus"
+    ],
+    "https://mcbench.ai/leaderboard": [],
+    "https://help.kagi.com/kagi/ai/llm-benchmark.html": [],
+    "https://prollm.toqan.ai/leaderboard/coding-assistant": [],
+    "https://llm-stats.com/models": [],
+    "https://arcprize.org/leaderboard": [],
+    "https://livecodebench.github.io/leaderboard.html": [],
+    "https://simple-bench.com/": [],
+    "https://openrouter.ai/rankings": [
+      "Claude 4 Sonnet",
+      "Claude 4 Opus"
+    ],
+    "https://github.com/aidanmclaughlin/AidanBench/tree/main": [],
+    "https://arena.xlang.ai/leaderboard": [],
+    "https://roocode.com/evals": [],
+    "https://andonlabs.com/evals/vending-bench": [],
+    "https://multi-swe-bench.github.io/#/": [],
+    "https://firebender.com/leaderboard": [],
+    "https://liveswebench.ai/": [],
+    "https://www.kaggle.com/benchmarks/google/facts-grounding": [],
+    "https://artificialanalysis.ai/models?models=o4-mini%2Cgpt-4-1%2Cgpt-4-1-mini%2Co3%2Cgemini-2-5-pro%2Cgemini-2-5-flash%2Cgemini-2-5-flash-reasoning%2Cclaude-3-7-sonnet%2Cclaude-3-7-sonnet-thinking%2Cmistral-medium-3%2Cdeepseek-r1%2Cgpt-4o-chatgpt-03-25%2Cdeepseek-v3": [
+      "Claude 4 Sonnet",
+      "Claude 4 Opus"
+    ]
+  }
+}
