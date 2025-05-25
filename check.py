@@ -11,11 +11,12 @@ from playwright.sync_api import sync_playwright
 TIMEOUT = 10  # seconds for requests
 STATE_FILE = "leaderboard_state.json"
 
+
 # --- Pattern builder helper ---
 def build_pattern(model_name: str) -> re.Pattern:
-    parts = re.split(r"[ -]+", model_name.strip())
+    parts = re.split(r"[ .-]+", model_name.strip())
     escaped = [re.escape(p) for p in parts]
-    regex = r"[- ]?".join(escaped)          # optional dash/space between each word
+    regex = r"[- .]?".join(escaped)  # optional dash/space/dot between each word
     return re.compile(regex, re.IGNORECASE)
 
 
@@ -52,17 +53,17 @@ def check_url_for_models_dynamic(url: str, patterns: dict[str, re.Pattern]):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
-            
+
             # Navigate and wait for content to load
             page.goto(url, timeout=TIMEOUT * 1000)  # Playwright uses milliseconds
-            
+
             # Wait for network to be idle (no requests for 500ms)
             page.wait_for_load_state("networkidle")
-            
+
             # Get the full page content
             text = page.content()
             browser.close()
-            
+
     except Exception as e:
         return {"error": str(e)}
 
@@ -77,15 +78,15 @@ def check_url_for_models(url: str, patterns: dict[str, re.Pattern], use_dynamic=
     """Check URL for models, with option to use dynamic loading."""
     if use_dynamic:
         return check_url_for_models_dynamic(url, patterns)
-    
+
     # Try static first
     result = check_url_for_models_static(url, patterns)
-    
+
     # If static failed or found no models, try dynamic
     if "error" in result or not result["found"]:
         print(f"    → Trying dynamic loading for {url}")
         return check_url_for_models_dynamic(url, patterns)
-    
+
     return result
 
 
@@ -199,15 +200,16 @@ def main():
     )
     parser.add_argument("bookmarks_file", help="Path to the HTML bookmarks file")
     parser.add_argument(
-        "-m", "--model",
+        "-m",
+        "--model",
         action="append",
         required=True,
-        help="Model name to search for (can be repeated)"
+        help="Model name to search for (can be repeated)",
     )
     parser.add_argument(
         "--dynamic",
         action="store_true",
-        help="Force use of dynamic loading (Playwright) for all URLs"
+        help="Force use of dynamic loading (Playwright) for all URLs",
     )
     args = parser.parse_args()
 
@@ -216,7 +218,7 @@ def main():
     old_results = old_state.get("results", {}) if old_state else {}
 
     # Build model patterns from CLI
-    cli_models = args.model                          # list[str]
+    cli_models = args.model  # list[str]
     model_patterns = {m: build_pattern(m) for m in cli_models}
 
     # Get current scan
@@ -239,7 +241,7 @@ def main():
 
     for url, found_now in current_scan.items():
         prev = set(merged_results.get(url, []))
-        prev -= rescanned                 # drop any models we just rescanned
+        prev -= rescanned  # drop any models we just rescanned
         merged_results[url] = sorted(prev | set(found_now))
 
     # Compare with previous state and show changes
