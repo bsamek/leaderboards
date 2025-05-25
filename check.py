@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime, UTC
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 # --- CONFIGURATION ---
 TIMEOUT = 10  # seconds for requests
@@ -30,8 +31,8 @@ def load_leaderboard_urls(html_path):
     return [a["href"] for a in dl.find_all("a", href=True)]
 
 
-def check_url_for_models(url: str, patterns: dict[str, re.Pattern]):
-    """Fetch a URL and return which model types were found."""
+def check_url_for_models_static(url: str, patterns: dict[str, re.Pattern]):
+    """Fetch a URL using requests (static content only)."""
     try:
         r = requests.get(url, timeout=TIMEOUT)
         text = r.text
@@ -43,6 +44,49 @@ def check_url_for_models(url: str, patterns: dict[str, re.Pattern]):
         if pattern.search(text):
             found_models.append(model_name)
     return {"found": found_models}
+
+
+def check_url_for_models_dynamic(url: str, patterns: dict[str, re.Pattern]):
+    """Fetch a URL using Playwright (handles dynamic content)."""
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            
+            # Navigate and wait for content to load
+            page.goto(url, timeout=TIMEOUT * 1000)  # Playwright uses milliseconds
+            
+            # Wait for network to be idle (no requests for 500ms)
+            page.wait_for_load_state("networkidle")
+            
+            # Get the full page content
+            text = page.content()
+            browser.close()
+            
+    except Exception as e:
+        return {"error": str(e)}
+
+    found_models = []
+    for model_name, pattern in patterns.items():
+        if pattern.search(text):
+            found_models.append(model_name)
+    return {"found": found_models}
+
+
+def check_url_for_models(url: str, patterns: dict[str, re.Pattern], use_dynamic=False):
+    """Check URL for models, with option to use dynamic loading."""
+    if use_dynamic:
+        return check_url_for_models_dynamic(url, patterns)
+    
+    # Try static first
+    result = check_url_for_models_static(url, patterns)
+    
+    # If static failed or found no models, try dynamic
+    if "error" in result or not result["found"]:
+        print(f"    → Trying dynamic loading for {url}")
+        return check_url_for_models_dynamic(url, patterns)
+    
+    return result
 
 
 def load_state(filename):
@@ -160,6 +204,11 @@ def main():
         required=True,
         help="Model name to search for (can be repeated)"
     )
+    parser.add_argument(
+        "--dynamic",
+        action="store_true",
+        help="Force use of dynamic loading (Playwright) for all URLs"
+    )
     args = parser.parse_args()
 
     # Load previous state
@@ -175,7 +224,7 @@ def main():
     current_scan = {}
 
     for url in urls:
-        res = check_url_for_models(url, model_patterns)
+        res = check_url_for_models(url, model_patterns, use_dynamic=args.dynamic)
         if "error" in res:
             print(f"[ERROR] {url} → {res['error']}")
             current_scan[url] = []  # Store empty list for failed URLs
