@@ -20,6 +20,27 @@ def build_pattern(model_name: str) -> re.Pattern:
     return re.compile(regex, re.IGNORECASE)
 
 
+def is_blocked_content(text: str) -> bool:
+    """Check if the content indicates the site is blocking access."""
+    blocking_indicators = [
+        "sorry, you have been blocked",
+        "access denied",
+        "cloudflare",
+        "security service",
+        "ray id",
+        "blocked by",
+        "403 forbidden",
+        "access to this resource",
+        "bot detection",
+        "just a moment",
+        "checking your browser",
+        "please wait while we check your browser",
+        "ddos protection",
+    ]
+    text_lower = text.lower()
+    return any(indicator in text_lower for indicator in blocking_indicators)
+
+
 def load_leaderboard_urls(html_path):
     """Parse the bookmarks HTML and return all URLs in the 'Leaderboards' folder."""
     with open(html_path, encoding="utf-8") as f:
@@ -39,6 +60,10 @@ def check_url_for_models_static(url: str, patterns: dict[str, re.Pattern]):
         text = r.text
     except Exception as e:
         return {"error": str(e)}
+
+    # Check if the site is blocking access
+    if is_blocked_content(text):
+        return {"error": "Site is blocking automated access (anti-bot protection)"}
 
     found_models = []
     for model_name, pattern in patterns.items():
@@ -66,6 +91,10 @@ def check_url_for_models_dynamic(url: str, patterns: dict[str, re.Pattern]):
 
     except Exception as e:
         return {"error": str(e)}
+
+    # Check if the site is blocking access
+    if is_blocked_content(text):
+        return {"error": "Site is blocking automated access (anti-bot protection)"}
 
     found_models = []
     for model_name, pattern in patterns.items():
